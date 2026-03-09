@@ -1,0 +1,27 @@
+version: '3.8'
+
+services:
+  app:
+    build: .
+    ports:
+      - "3000:3000"
+    environment:
+      - PORT=3000
+      - REDIS_URL=redis://redis:6379
+      - MAX_CAPACITY=10000
+      - JWT_SECRET=super_secret_key_change_me_in_prod
+    depends_on:
+      - redis
+    restart: always
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    restart: always
+    # 주의: 프로덕션 환경에서는 volumes를 설정하여 데이터를 백업/유지해야 합니다.
+    # volumes:
+    #   - redis_data:/data
+
+# volumes:
+#   redis_data:
