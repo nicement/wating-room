@@ -6,6 +6,7 @@ export const config = {
   /** Server */
   PORT: Number(process.env.PORT) || 3000,
   NODE_ENV: process.env.NODE_ENV || 'development',
+  DESTINATION_URL: process.env.DESTINATION_URL || 'https://naver.com',
   IS_PRODUCTION: isProduction,
 
   /** Redis */

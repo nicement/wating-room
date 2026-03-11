@@ -5,11 +5,8 @@ services:
     build: .
     ports:
       - "3000:3000"
-    environment:
-      - PORT=3000
-      - REDIS_URL=redis://redis:6379
-      - MAX_CAPACITY=10000
-      - JWT_SECRET=super_secret_key_change_me_in_prod
+    env_file:
+      - .env
     depends_on:
       - redis
     restart: always
@@ -23,5 +20,5 @@ services:
     # volumes:
     #   - redis_data:/data
 
-# volumes:
-#   redis_data:
+    # volumes:
+    #   redis_data:

@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Waiting Room</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-base: #0f172a;
+            --bg-card: rgba(30, 41, 59, 0.7);
+            --border-card: rgba(255, 255, 255, 0.1);
+            --accent: #38bdf8;
+            --accent-glow: rgba(56, 189, 248, 0.5);
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: radial-gradient(circle at top right, #1e293b 0%, var(--bg-base) 100%);
+            color: var(--text-main);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+        }
+
+        .container {
+            background: var(--bg-card);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid var(--border-card);
+            border-radius: 24px;
+            padding: 48px;
+            width: 100%;
+            max-width: 480px;
+            text-align: center;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+            animation: slideUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+            position: relative;
+            z-index: 10;
+        }
+
+        .spinner {
+            width: 64px;
+            height: 64px;
+            border-radius: 50%;
+            border: 3px solid rgba(255, 255, 255, 0.1);
+            border-top-color: var(--accent);
+            margin: 0 auto 32px;
+            animation: spin 1s cubic-bezier(0.6, 0.2, 0.4, 0.8) infinite;
+            box-shadow: 0 0 20px var(--accent-glow);
+        }
+
+        h1 {
+            font-weight: 700;
+            font-size: 24px;
+            margin-bottom: 12px;
+            letter-spacing: -0.02em;
+        }
+
+        p {
+            color: var(--text-muted);
+            font-size: 15px;
+            line-height: 1.6;
+            margin-bottom: 32px;
+        }
+
+        .status-box {
+            background: rgba(15, 23, 42, 0.5);
+            border-radius: 16px;
+            padding: 24px;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .position-label {
+            font-size: 13px;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            color: var(--text-muted);
+            margin-bottom: 8px;
+            display: block;
+        }
+
+        .position-value {
+            font-size: 48px;
+            font-weight: 700;
+            color: var(--accent);
+            font-variant-numeric: tabular-nums;
+            line-height: 1;
+        }
+
+        .info-text {
+            font-size: 13px;
+            color: var(--text-muted);
+            margin-top: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #22c55e;
+            animation: pulse 2s infinite;
+        }
+
+        /* Abstract Background Elements */
+        .bg-element {
+            position: absolute;
+            border-radius: 50%;
+            filter: blur(80px);
+            z-index: 1;
+            opacity: 0.5;
+            animation: float 20s ease-in-out infinite alternate;
+        }
+        .bg-element.one {
+            width: 400px;
+            height: 400px;
+            background: rgba(56, 189, 248, 0.15);
+            top: -100px;
+            left: -100px;
+        }
+        .bg-element.two {
+            width: 300px;
+            height: 300px;
+            background: rgba(168, 85, 247, 0.15);
+            bottom: -50px;
+            right: -50px;
+            animation-delay: -5s;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        @keyframes slideUp {
+            from { transform: translateY(20px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.5); opacity: 0.5; }
+        }
+
+        @keyframes float {
+            0% { transform: translate(0, 0); }
+            100% { transform: translate(50px, 50px); }
+        }
+
+        .hidden {
+            display: none !important;
+        }
+    </style>
+</head>
+<body>
+    <div class="bg-element one"></div>
+    <div class="bg-element two"></div>
+
+    <div class="container">
+        <div class="spinner"></div>
+        <h1 id="title">대기열에 진입했습니다</h1>
+        <p id="desc">안정적인 서비스 접속을 위해 대기 중입니다.<br>새로고침하지 마시고 잠시만 기다려주세요.</p>
+        
+        <div class="status-box">
+            <span class="position-label">현재 내 대기 순서</span>
+            <div class="position-value" id="position">--</div>
+        </div>
+
+        <div class="info-text">
+            <div class="dot"></div>
+            <span>예상 대기 시간: 잠시 후 접속됩니다</span>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // ticketId is now securely stored in an HttpOnly cookie.
+            // No need to parse it from the URL.
+
+            const positionEl = document.getElementById('position');
+            const titleEl = document.getElementById('title');
+            const descEl = document.getElementById('desc');
+
+            let pollInterval;
+
+            const pollStatus = async () => {
+                try {
+                    // Credentials (cookies) are automatically sent
+                    const response = await fetch(`/api/queue/status`);
+                    
+                    if (!response.ok) {
+                        if (response.status === 404) {
+                            window.location.href = '/';
+                        }
+                        return;
+                    }
+
+                    const data = await response.json();
+
+                    if (data.status === 'READY' && data.destination) {
+                        clearInterval(pollInterval);
+                        titleEl.innerText = "접속 준비 완료!";
+                        descEl.innerText = "목적지로 이동 중입니다. 잠시만 기다려주세요.";
+                        
+                        // The access_token is now securely set in an HttpOnly cookie.
+                        // We simply navigate to the destination.
+                        window.location.href = data.destination;
+                    } else if (data.status === 'WAITING') {
+                        positionEl.innerText = Number(data.position).toLocaleString();
+                        
+                        // Set title and desc in case it was modified
+                        titleEl.innerText = "대기열에 진입했습니다";
+                        descEl.innerText = "안정적인 서비스 접속을 위해 대기 중입니다.\n새로고침하지 마시고 잠시만 기다려주세요.";
+                    }
+
+                } catch (error) {
+                    console.error('Polling error:', error);
+                }
+            };
+
+            pollStatus();
+            pollInterval = setInterval(pollStatus, 3000);
+        });
+    </script>
+</body>
+</html>

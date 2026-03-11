@@ -30,6 +30,7 @@ export type JoinResponse = JoinBypassResponse | JoinWaitResponse;
 export interface StatusReadyResponse {
   status: typeof QueueStatus.READY;
   token: string;
+  destination: string;
 }
 
 export interface StatusWaitingResponse {

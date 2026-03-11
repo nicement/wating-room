@@ -5,3 +5,4 @@ dist
 tests
 docker-compose.yml
 Dockerfile
+*.log

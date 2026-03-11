@@ -30,13 +30,14 @@ const statusSchema = {
   tags: ['Queue'],
   summary: '대기열 상태 확인 (Polling)',
   description: '대기 중인 클라이언트가 3~5초 주기로 호출하여 자신의 순번을 갱신합니다. 순서가 되면 JWT 토큰이 발급됩니다.',
-  querystring: {
-    type: 'object',
-    required: ['ticketId'],
-    properties: {
-      ticketId: { type: 'string', description: '대기열 진입 시 발급받은 티켓 ID' },
-    },
-  },
+  // Removed querystring schema for ticketId since we're using cookies
+  // querystring: {
+  //   type: 'object',
+  //   required: ['ticketId'],
+  //   properties: {
+  //     ticketId: { type: 'string', description: '대기열 진입 시 발급받은 티켓 ID' },
+  //   },
+  // },
   response: {
     200: {
       description: '성공 응답',
@@ -44,6 +45,7 @@ const statusSchema = {
       properties: {
         status: { type: 'string', enum: [QueueStatus.READY, QueueStatus.WAITING], description: 'READY: 입장 가능 / WAITING: 대기 중' },
         token: { type: 'string', description: 'READY 상태일 때 발급되는 JWT 토큰' },
+        destination: { type: 'string', description: 'READY 상태일 때 이동할 목적지 URL' },
         position: { type: 'number', description: 'WAITING 상태일 때의 현재 대기 순번' },
       },
     },
@@ -107,11 +109,11 @@ export default async function queueRoutes(fastify: FastifyInstance) {
    * GET /api/queue/status
    * 대기 중인 사용자의 순번을 갱신하거나 입장 준비 상태를 반환
    */
-  fastify.get<{ Querystring: { ticketId: string }; Reply: StatusReadyResponse | StatusWaitingResponse | ErrorResponse }>(
+  fastify.get<{ Reply: StatusReadyResponse | StatusWaitingResponse | ErrorResponse }>(
     '/api/queue/status',
     { schema: statusSchema },
     async (request, reply) => {
-      const { ticketId } = request.query;
+      const ticketId = request.cookies.ticketId;
 
       if (!ticketId) {
         return reply.status(400).send({ error: 'ticketId is required' });
@@ -121,7 +123,13 @@ export default async function queueRoutes(fastify: FastifyInstance) {
       const isReady = await redis.sismember(REDIS_KEYS.ACTIVE_USERS, ticketId);
       if (isReady) {
         const token = fastify.jwt.sign({ ticketId, scope: 'entrance' });
-        return reply.send({ status: QueueStatus.READY, token });
+        reply.setCookie('access_token', token, {
+          path: '/',
+          httpOnly: true,
+          secure: config.IS_PRODUCTION,
+          sameSite: 'lax',
+        });
+        return reply.send({ status: QueueStatus.READY, token, destination: config.DESTINATION_URL });
       }
 
       // 대기열 위치 조회

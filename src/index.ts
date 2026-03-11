@@ -4,9 +4,14 @@ import fastifySwagger from '@fastify/swagger';
 import fastifySwaggerUi from '@fastify/swagger-ui';
 import fastifyJwt from '@fastify/jwt';
 
+import fastifyStatic from '@fastify/static';
+import fastifyCookie from '@fastify/cookie';
+import path from 'path';
+
 import { config } from './config/env';
 import redisPlugin from './plugins/redis';
 import queueRoutes from './routes/queue';
+import pageRoutes from './routes/page';
 import schedulerPlugin from './scheduler';
 
 // ──────────────────────────────────────────────
@@ -51,9 +56,20 @@ export function buildApp(): FastifyInstance {
     timeWindow: config.RATE_LIMIT_WINDOW,
   });
 
+  app.register(fastifyCookie, {
+    secret: config.JWT_SECRET, // for optionally signing cookies
+    hook: 'onRequest',
+  });
+
+  app.register(fastifyStatic, {
+    root: path.join(__dirname, 'public'),
+    prefix: '/public/', // optional: default '/'
+  });
+
   // ── Application Plugins ──
   app.register(redisPlugin);
   app.register(queueRoutes);
+  app.register(pageRoutes);
   app.register(schedulerPlugin);
 
   return app;
